@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopkeeper Stock Manager</title>
+<style>
+  :root {
+    --primary: #4CAF50;
+    --primary-dark: #388E3C;
+    --accent: #FF9800;
+    --danger: #E53935;
+    --bg-light: #f9f9f9;
+    --bg-dark: #fff;
+    --text-dark: #333;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --radius: 8px;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0;
+    background: var(--bg-light);
+    color: var(--text-dark);
+    padding: 0 10px;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--primary);
+    color: white;
+    padding: 12px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 10px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    margin: 0;
+    flex: 1 1 auto;
+  }
+
+  .search-bar input {
+    padding: 8px 10px;
+    border: none;
+    border-radius: var(--radius);
+    width: 180px;
+    max-width: 100%;
+    outline: none;
+  }
+
+  .more-menu {
+    position: relative;
+  }
+  .more-menu button {
+    background: white;
+    color: var(--primary);
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .more-menu button:hover {
+    background: var(--bg-light);
+  }
+  .more-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 40px;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px;
+    z-index: 10;
+    min-width: 200px;
+  }
+  .more-menu:hover .more-content {
+    display: block;
+  }
+  .more-content ul {
+    padding-left: 20px;
+    margin: 0;
+  }
+  .more-content p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+
+  .form-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+  }
+  .form-section input,
+  .form-section button {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .form-section input {
+    border: 1px solid #ccc;
+    outline: none;
+  }
+  .form-section input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 3px var(--primary);
+  }
+  .form-section button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+  .form-section button:hover {
+    background: var(--primary-dark);
+  }
+
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    min-width: 600px;
+  }
+  th {
+    background: var(--primary);
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  td {
+    padding: 8px;
+    text-align: center;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+  }
+  tr:nth-child(even) {
+    background: #fdfdfd;
+  }
+  tr:hover {
+    background: #f5f5f5;
+  }
+
+  .btn-small {
+    padding: 5px 8px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 0 2px;
+  }
+  .btn-edit {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-delete {
+    background: var(--danger);
+    color: white;
+  }
+  .btn-edit:hover {
+    background: #fb8c00;
+  }
+  .btn-delete:hover {
+    background: #c62828;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 600px) {
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .search-bar input {
+      width: 100%;
+    }
+    .form-section {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Stock Manager</h1>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search..." oninput="searchItems()">
+  </div>
+  <div class="more-menu">
+    <button>☰</button>
+    <div class="more-content">
+      <p><strong>Item List:</strong></p>
+      <ul id="itemList"></ul>
+      <p id="totalValue"></p>
+      <p id="totalSold"></p>
+    </div>
+  </div>
+</header>
+
+<div class="form-section">
+  <input type="text" id="itemName" placeholder="Item Name">
+  <input type="number" id="itemQty" placeholder="Quantity">
+  <input type="number" id="itemCostPrice" placeholder="Cost Price" step="0.01">
+  <input type="number" id="itemSellPrice" placeholder="Selling Price" step="0.01">
+  <button id="addBtn" onclick="addItem()">Add / Update</button>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Item Name</th>
+        <th>Qty</th>
+        <th>Cost Price</th>
+        <th>Selling Price</th>
+        <th>Profit / Loss</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="inventoryTable"></tbody>
+  </table>
+</div>
+
+<script>
+let inventory = JSON.parse(localStorage.getItem("inventory")) || [];
+let editIndex = null;
+
+function saveInventory() {
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  updateMoreMenu();
+  displayInventory();
+}
+
+function displayInventory() {
+  const table = document.getElementById("inventoryTable");
+  table.innerHTML = "";
+  inventory.forEach((item, index) => {
+    const row = document.createElement("tr");
+    const profit = (item.sellPrice - item.costPrice) * item.qty;
+    row.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.qty}</td>
+      <td>${item.costPrice.toFixed(2)}</td>
+      <td>${item.sellPrice.toFixed(2)}</td>
+      <td style="color:${profit >= 0 ? 'green':'red'}">${profit.toFixed(2)}</td>
+      <td>
+        <button class="btn-small btn-edit" onclick="editItem(${index})">Edit</button>
+        <button class="btn-small btn-delete" onclick="deleteItem(${index})">Delete</button>
+      </td>
+    `;
+    table.appendChild(row);
+  });
+}
+
+function updateMoreMenu() {
+  const list = document.getElementById("itemList");
+  list.innerHTML = "";
+  let totalValue = 0;
+  let totalQty = 0;
+  inventory.forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = item.name;
+    list.appendChild(li);
+    totalValue += item.sellPrice * item.qty;
+    totalQty += item.qty;
+  });
+  document.getElementById("totalValue").textContent = `Total Stock Value: ${totalValue.toFixed(2)}`;
+  document.getElementById("totalSold").textContent = `Total Items: ${totalQty}`;
+}
+
+function addItem() {
+  const name = document.getElementById("itemName").value.trim();
+  const qty = parseInt(document.getElementById("itemQty").value);
+  const costPrice = parseFloat(document.getElementById("itemCostPrice").value);
+  const sellPrice = parseFloat(document.getElementById("itemSellPrice").value);
+
+  if (!name || qty <= 0 || costPrice <= 0 || sellPrice <= 0) {
+    alert("Enter valid details!");
+    return;
+  }
+
+  if (editIndex !== null) {
+    inventory[editIndex] = { name, qty, costPrice, sellPrice };
+    editIndex = null;
+  } else {
+    inventory.push({ name, qty, costPrice, sellPrice });
+  }
+
+  saveInventory();
+  clearForm();
+}
+
+function clearForm() {
+  document.getElementById("itemName").value = "";
+  document.getElementById("itemQty").value = "";
+  document.getElementById("itemCostPrice").value = "";
+  document.getElementById("itemSellPrice").value = "";
+}
+
+function editItem(index) {
+  const item = inventory[index];
+  document.getElementById("itemName").value = item.name;
+  document.getElementById("itemQty").value = item.qty;
+  document.getElementById("itemCostPrice").value = item.costPrice;
+  document.getElementById("itemSellPrice").value = item.sellPrice;
+  editIndex = index;
+}
+
+function deleteItem(index) {
+  if (confirm("Delete this item?")) {
+    inventory.splice(index, 1);
+    saveInventory();
+  }
+}
+
+function searchItems() {
+  const searchValue = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = inventory.filter(item => item.name.toLowerCase().includes(searchValue));
+  const table = document.getElementById("inventoryTable");
+  table.innerHTML = "";
+  filtered.forEach((item, index) => {
+    const profit = (item.sellPrice - item.costPrice) * item.qty;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.qty}</td>
+      <td>${item.costPrice.toFixed(2)}</td>
+      <td>${item.sellPrice.toFixed(2)}</td>
+      <td style="color:${profit >= 0 ? 'green':'red'}">${profit.toFixed(2)}</td>
+      <td>
+        <button class="btn-small btn-edit" onclick="editItem(${index})">Edit</button>
+        <button class="btn-small btn-delete" onclick="deleteItem(${index})">Delete</button>
+      </td>
+    `;
+    table.appendChild(row);
+  });
+}
+
+// Enter key navigation
+const inputs = ["itemName", "itemQty", "itemCostPrice", "itemSellPrice"];
+inputs.forEach((id, i) => {
+  document.getElementById(id).addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (i < inputs.length - 1) {
+        document.getElementById(inputs[i + 1]).focus();
+      } else {
+        document.getElementById("addBtn").click();
+      }
+    }
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    document.getElementById("addBtn").click();
+  }
+  if (e.ctrlKey && e.key.toLowerCase() === "f") {
+    e.preventDefault();
+    document.getElementById("searchInput").focus();
+  }
+  if (e.ctrlKey && e.key.toLowerCase() === "n") {
+    e.preventDefault();
+    clearForm();
+    document.getElementById("itemName").focus();
+  }
+});
+
+displayInventory();
+updateMoreMenu();
+</script>
+
+</body>
+</html>
